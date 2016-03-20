@@ -1,0 +1,68 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
+
+    defaultConfig {
+        applicationId "com.way.screenrecord"
+        minSdkVersion 21
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0.0"
+    }
+    signingConfigs {
+        release {
+            def filePrivateProperties = file("../private.properties")
+            if (filePrivateProperties.exists()) {
+                Properties propsPrivate = new Properties()
+                propsPrivate.load(new FileInputStream(filePrivateProperties))
+
+                storeFile file(propsPrivate['key.store'])
+                keyAlias propsPrivate['key.alias']
+                storePassword propsPrivate['key.store.password']
+                keyPassword propsPrivate['key.alias.password']
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // 显示Log
+            buildConfigField "boolean", "LOG_DEBUG", "true"
+            //是否开启ACRA
+            buildConfigField "boolean", "ACRA_ENABLED", "false"
+        }
+        release {
+            // 不显示Log
+            buildConfigField "boolean", "LOG_DEBUG", "false"
+            //是否开启ACRA
+            buildConfigField "boolean", "ACRA_ENABLED", "true"
+            signingConfig signingConfigs.release
+            shrinkResources true
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    applicationVariants.all { variant ->//获取 variant 参数，就是 productFlavor x buildType
+        variant.outputs.each { output ->//获取输出文件
+            def file = output.outputFile//修改实例
+            if (file != null && file.name.endsWith('release.apk')) {//变种名以release.apk结尾时才修改名字
+                //def fileName = file.name.replace(file.name, "ApeScreenshot_V" + versionName + "_${buildTime()}.apk")
+                def fileName = file.name.replace(file.name, "ScreenRecord" + "_V" + variant.versionName + ".apk")
+                output.outputFile = new File(file.parentFile, fileName)
+            }
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    testCompile 'junit:junit:4.12'
+}
